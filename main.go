@@ -9,22 +9,24 @@ import (
 )
 
 type BILLmanager struct {
-	url      string
-	username string
-	password string
-	client   *http.Client
+	url             string
+	username        string
+	password        string
+	client          *http.Client
+	logging_enabled bool
 }
 
-func New(url, username, password string) *BILLmanager {
+func New(url, username, password string, logging_enabled bool) *BILLmanager {
 	return &BILLmanager{
-		url:      url,
-		username: username,
-		password: password,
-		client:   &http.Client{},
+		url:             url,
+		username:        username,
+		password:        password,
+		client:          &http.Client{},
+		logging_enabled: logging_enabled,
 	}
 }
 
-func (b *BILLmanager) buildGetParams(data map[string]string) string {
+func (ctx *BILLmanager) buildGetParams(data map[string]string) string {
 	params := url.Values{}
 
 	for key, value := range data {
@@ -34,9 +36,9 @@ func (b *BILLmanager) buildGetParams(data map[string]string) string {
 	return params.Encode()
 }
 
-func (b *BILLmanager) Request(data map[string]string, authorized bool) ([]byte, error) {
+func (ctx *BILLmanager) Request(data map[string]string, authorized bool) ([]byte, error) {
 	if authorized {
-		data["authinfo"] = fmt.Sprintf("%s:%s", b.username, b.password)
+		data["authinfo"] = fmt.Sprintf("%s:%s", ctx.username, ctx.password)
 	}
 
 	if _, exists := data["out"]; !exists {
@@ -46,10 +48,13 @@ func (b *BILLmanager) Request(data map[string]string, authorized bool) ([]byte, 
 	// Некоторые CDN/ддос-защиты кэшируют API, это нужно для обхода кэширования
 	data["time"] = time.Now().String()
 
-	u := fmt.Sprintf("%s/?%s", b.url, b.buildGetParams(data))
-	fmt.Println(u)
+	u := fmt.Sprintf("%s/?%s", ctx.url, ctx.buildGetParams(data))
 
-	resp, err := b.client.Get(u)
+	if ctx.logging_enabled {
+		fmt.Println(u)
+	}
+
+	resp, err := ctx.client.Get(u)
 	if err != nil {
 		return nil, err
 	}

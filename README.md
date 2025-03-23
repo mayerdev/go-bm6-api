@@ -12,7 +12,7 @@ package main
 import "github.com/mayerdev/go-bm6-api"
 
 func main() {
-    api := bm6.New("https://bill.manager", "user", "password")
+    api := bm6.New("https://bill.manager", "user", "password", true)
 
     api.Request(map[string]string{...})
 }
